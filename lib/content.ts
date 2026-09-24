@@ -3,6 +3,9 @@ export interface QuizQuestion {
   question: string;
   options: string[];
   response: string;
+  /** Rango opcional para preguntas que usan un selector numérico gamificado
+   * (ver components/scenes/NumberPicker.tsx) en vez del grid genérico de opciones. */
+  numberRange?: { min: number; max: number };
 }
 
 const GROUP_NAMES = [
@@ -41,6 +44,7 @@ export const QUIZ_QUESTIONS: QuizQuestion[] = [
     question: "Adivina el número en el que estoy pensando",
     options: ["1", "7", "13", "42"],
     response: "¡Acertaste!",
+    numberRange: { min: 0, max: 100 },
   },
 ];
 
