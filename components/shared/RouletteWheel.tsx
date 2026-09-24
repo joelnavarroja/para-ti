@@ -13,17 +13,30 @@ const SPIN_MS = 3600;
 // a los mismos SPIN_MS de siempre) para no alargar el timing del flujo.
 const BUILDING_MS = 900;
 const FLASH_MS = 300;
+const DEFAULT_SPIN_EASE: [number, number, number, number] = [0.15, 0.7, 0.25, 1];
 
 export function RouletteWheel({
   segments,
   winningIndex,
   onFinish,
   label,
+  tensionIntensity = 1,
+  spinEase = DEFAULT_SPIN_EASE,
 }: {
   segments: string[];
   winningIndex: number;
   onFinish: () => void;
   label: string;
+  /** Multiplicador de intensidad del shake/glitch final (ver TensionFX). */
+  tensionIntensity?: number;
+  /**
+   * Curva de easing del giro. Por defecto es la original (desaceleración
+   * suave); la ronda 2 pasa una curva con una "caída" mucho más lenta y
+   * dramática en el último tramo antes de parar, sin tocar la duración
+   * total del giro (para no romper los timings fijos que dependen de los
+   * tests end-to-end).
+   */
+  spinEase?: [number, number, number, number];
 }) {
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
@@ -59,13 +72,18 @@ export function RouletteWheel({
     .join(", ");
 
   return (
-    <TensionFX phase={phase} buildingMs={BUILDING_MS} flashMs={FLASH_MS}>
+    <TensionFX
+      phase={phase}
+      buildingMs={BUILDING_MS}
+      flashMs={FLASH_MS}
+      intensity={tensionIntensity}
+    >
       <div className="flex flex-col items-center gap-6">
         <div className="relative h-72 w-72" data-testid="roulette-wheel">
           <div className="absolute left-1/2 top-0 z-10 -ml-3 h-6 w-6 -translate-y-1/2 rotate-180 border-x-[12px] border-b-[18px] border-x-transparent border-b-amber-300" />
           <motion.div
             animate={{ rotate: rotation }}
-            transition={{ duration: 3.5, ease: [0.15, 0.7, 0.25, 1] }}
+            transition={{ duration: 3.5, ease: spinEase }}
             className="h-full w-full rounded-full border-8 border-amber-300 shadow-2xl shadow-amber-500/30"
             style={{ background: `conic-gradient(${gradient})` }}
           >

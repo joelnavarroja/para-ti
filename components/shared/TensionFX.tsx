@@ -28,11 +28,18 @@ export function TensionFX({
   phase,
   buildingMs = 900,
   flashMs = 300,
+  intensity = 1,
   children,
 }: {
   phase: TensionPhase;
   buildingMs?: number;
   flashMs?: number;
+  /**
+   * Multiplicador del shake/glitch (1 = intensidad original). Se usa para
+   * hacer que momentos "más grandes" (ej. la ruleta final de la ronda 2)
+   * se sientan más intensos que el resto sin duplicar el componente.
+   */
+  intensity?: number;
   children: ReactNode;
 }) {
   useEffect(() => {
@@ -42,12 +49,15 @@ export function TensionFX({
     }
   }, [phase, buildingMs]);
 
+  const shakeX = SHAKE_X.map((v) => v * intensity);
+  const shakeRotate = SHAKE_ROTATE.map((v) => v * intensity);
+
   return (
     <>
       <motion.div
         animate={
           phase === "building"
-            ? { x: SHAKE_X, rotate: SHAKE_ROTATE, filter: GLITCH_FILTER }
+            ? { x: shakeX, rotate: shakeRotate, filter: GLITCH_FILTER }
             : { x: 0, rotate: 0, filter: "hue-rotate(0deg) contrast(1)" }
         }
         transition={{ duration: buildingMs / 1000, ease: "easeIn" }}

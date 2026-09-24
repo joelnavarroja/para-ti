@@ -62,9 +62,10 @@ test("recorrido completo de intro a pack opening final", async ({ page }) => {
   await page.getByRole("button", { name: "Ver" }).click();
   await page.getByRole("button", { name: "Recuperarlo" }).click();
 
-  // Ruleta final
+  // Ruleta final (finale épico: giro 3.6s + ventana de explosión de
+  // aterrizaje de 2.2s antes de avanzar de escena, ver 14-RouletteRound2.tsx)
   await page.getByTestId("roulette-spin").click();
-  await page.waitForTimeout(5000);
+  await page.waitForTimeout(6200);
 
   // Pack opening: la apertura ahora es una secuencia dramática de varios
   // segundos (tensión -> rasgado -> flash -> reveal), así que esperamos con
