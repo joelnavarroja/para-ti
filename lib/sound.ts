@@ -219,6 +219,58 @@ export function playComicHonk() {
   });
 }
 
+/**
+ * Trombón triste descendente ("wah wah wah waaah"), para remates cómicos
+ * de mala noticia (ej. la deuda falsa). Cuatro notas en escalera
+ * descendente con la última alargada y un vibrato lento en esa última
+ * nota para el "waaah" final, siguiendo el mismo patrón de osciladores +
+ * envolvente de ganancia que el resto de efectos de este archivo.
+ */
+export function playSadTrombone() {
+  const context = getContext();
+  if (!context) return;
+  const now = context.currentTime;
+  const notes = [392.0, 349.23, 329.63, 293.66]; // G4 F4 E4 D4, escalera descendente
+  const noteDuration = 0.32;
+  notes.forEach((freq, i) => {
+    const isLast = i === notes.length - 1;
+    tone(context, {
+      freq,
+      duration: isLast ? noteDuration * 2 : noteDuration,
+      type: "sawtooth",
+      peakGain: 0.14,
+      start: now + i * noteDuration,
+    });
+  });
+
+  // Vibrato lento sobre la última nota, para el "waaah" final.
+  const lastStart = now + (notes.length - 1) * noteDuration;
+  const vibrato = context.createOscillator();
+  const vibratoGain = context.createGain();
+  const osc = context.createOscillator();
+  const gain = context.createGain();
+
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(notes[notes.length - 1], lastStart);
+
+  vibrato.type = "sine";
+  vibrato.frequency.setValueAtTime(6, lastStart);
+  vibratoGain.gain.setValueAtTime(10, lastStart);
+  vibrato.connect(vibratoGain);
+  vibratoGain.connect(osc.frequency);
+
+  gain.gain.setValueAtTime(0.0001, lastStart);
+  gain.gain.exponentialRampToValueAtTime(0.12, lastStart + 0.08);
+  gain.gain.exponentialRampToValueAtTime(0.0001, lastStart + noteDuration * 2);
+
+  osc.connect(gain);
+  gain.connect(context.destination);
+  vibrato.start(lastStart);
+  osc.start(lastStart);
+  vibrato.stop(lastStart + noteDuration * 2 + 0.05);
+  osc.stop(lastStart + noteDuration * 2 + 0.05);
+}
+
 /** Flash sonoro breve y agudo, usado en el "rasgado" del sobre. */
 export function playRip() {
   const context = getContext();
