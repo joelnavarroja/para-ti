@@ -1,6 +1,6 @@
 "use client";
 
-import { useReducer } from "react";
+import { useReducer, useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import {
   currentScene,
@@ -8,6 +8,7 @@ import {
   initialExperienceState,
 } from "@/lib/sceneMachine";
 import { QUIZ_QUESTIONS } from "@/lib/content";
+import { startBackgroundMusic, stopBackgroundMusic } from "@/lib/sound";
 
 import { IntroScreen } from "./scenes/01-IntroScreen";
 import { RouletteRound1 } from "./scenes/02-RouletteRound1";
@@ -30,8 +31,33 @@ export function ExperienceRoot() {
   const scene = currentScene(state);
   const advance = () => dispatch({ type: "ADVANCE" });
 
+  // Estado de mute vive aquí (arriba del árbol) para sobrevivir a los
+  // cambios de escena, que remontan cada componente vía AnimatePresence.
+  // Solo controla la música de fondo (start/stopBackgroundMusic); los
+  // efectos puntuales de cada escena (playFanfare, playRip, etc.) siguen
+  // sonando siempre, sin pasar por este toggle.
+  const [musicMuted, setMusicMuted] = useState(false);
+
+  const toggleMute = () => {
+    if (musicMuted) {
+      startBackgroundMusic();
+    } else {
+      stopBackgroundMusic();
+    }
+    setMusicMuted((prev) => !prev);
+  };
+
   return (
     <main className="min-h-dvh bg-gradient-to-b from-neutral-950 via-red-950/40 to-neutral-950 text-white">
+      <button
+        type="button"
+        onClick={toggleMute}
+        aria-label={musicMuted ? "Activar música" : "Silenciar música"}
+        data-testid="music-mute-toggle"
+        className="fixed right-4 top-4 z-50 flex h-11 w-11 items-center justify-center rounded-full bg-black/40 text-xl backdrop-blur transition hover:bg-black/60"
+      >
+        {musicMuted ? "🔇" : "🔊"}
+      </button>
       <AnimatePresence mode="wait">
         {scene === "intro" && <IntroScreen key={scene} onAdvance={advance} />}
         {scene === "roulette1" && (
