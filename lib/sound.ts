@@ -172,6 +172,53 @@ export function playChime() {
   }
 }
 
+/**
+ * Gemido/honk absurdo tipo payaso o pato de goma con vibrato, para
+ * momentos "WTF gracioso" (ej. el virus). Deliberadamente ridículo, no
+ * tenso: pitch bend descendente + vibrato rápido + hipo final agudo.
+ */
+export function playComicHonk() {
+  const context = getContext();
+  if (!context) return;
+  const now = context.currentTime;
+
+  const osc = context.createOscillator();
+  const gain = context.createGain();
+  const vibrato = context.createOscillator();
+  const vibratoGain = context.createGain();
+
+  osc.type = "sawtooth";
+  osc.frequency.setValueAtTime(420, now);
+  osc.frequency.exponentialRampToValueAtTime(130, now + 0.5);
+
+  vibrato.type = "sine";
+  vibrato.frequency.setValueAtTime(22, now);
+  vibratoGain.gain.setValueAtTime(35, now);
+  vibrato.connect(vibratoGain);
+  vibratoGain.connect(osc.frequency);
+
+  gain.gain.setValueAtTime(0.0001, now);
+  gain.gain.exponentialRampToValueAtTime(0.2, now + 0.08);
+  gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.5);
+
+  osc.connect(gain);
+  gain.connect(context.destination);
+  vibrato.start(now);
+  osc.start(now);
+  vibrato.stop(now + 0.55);
+  osc.stop(now + 0.55);
+
+  // Hipo/gemido final agudo, tipo remate de payaso.
+  tone(context, {
+    freq: 260,
+    freqEnd: 520,
+    duration: 0.15,
+    type: "square",
+    peakGain: 0.12,
+    start: now + 0.48,
+  });
+}
+
 /** Flash sonoro breve y agudo, usado en el "rasgado" del sobre. */
 export function playRip() {
   const context = getContext();
