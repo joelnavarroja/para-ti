@@ -5,8 +5,10 @@ import confetti from "canvas-confetti";
 
 export function ConfettiBurst({
   variant = "burst",
+  intense = false,
 }: {
   variant?: "burst" | "cannon" | "realistic";
+  intense?: boolean;
 }) {
   useEffect(() => {
     if (variant === "cannon") {
@@ -14,18 +16,31 @@ export function ConfettiBurst({
       return;
     }
     if (variant === "realistic") {
-      const duration = 2000;
+      // En modo "intense" (usado en el reveal final del pack opening) el
+      // confeti dura más y lanza muchas más partículas por frame para un
+      // efecto mucho más dramático.
+      const duration = intense ? 3500 : 2000;
+      const particlesPerBurst = intense ? 8 : 3;
       const end = Date.now() + duration;
+      if (intense) {
+        confetti({
+          particleCount: 200,
+          spread: 160,
+          startVelocity: 55,
+          origin: { y: 0.5 },
+          colors: ["#fbbf24", "#f43f5e", "#facc15", "#ffffff"],
+        });
+      }
       (function frame() {
         confetti({
-          particleCount: 3,
+          particleCount: particlesPerBurst,
           angle: 60,
           spread: 55,
           origin: { x: 0 },
           colors: ["#fbbf24", "#f43f5e", "#facc15"],
         });
         confetti({
-          particleCount: 3,
+          particleCount: particlesPerBurst,
           angle: 120,
           spread: 55,
           origin: { x: 1 },
@@ -36,7 +51,7 @@ export function ConfettiBurst({
       return;
     }
     confetti({ particleCount: 80, spread: 70, origin: { y: 0.5 } });
-  }, [variant]);
+  }, [variant, intense]);
 
   return null;
 }

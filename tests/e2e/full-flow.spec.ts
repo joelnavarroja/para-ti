@@ -66,9 +66,13 @@ test("recorrido completo de intro a pack opening final", async ({ page }) => {
   await page.getByTestId("roulette-spin").click();
   await page.waitForTimeout(5000);
 
-  // Pack opening
+  // Pack opening: la apertura ahora es una secuencia dramática de varios
+  // segundos (tensión -> rasgado -> flash -> reveal), así que esperamos con
+  // un timeout generoso a que aparezca la imagen final.
   await page.getByTestId("pack-button").click();
-  await expect(page.getByTestId("final-gift-image")).toBeVisible();
+  await expect(page.getByTestId("final-gift-image")).toBeVisible({
+    timeout: 15_000,
+  });
 
   expect(consoleErrors, `Console errors: ${consoleErrors.join(", ")}`).toEqual([]);
   expect(failedRequests, `Failed requests: ${failedRequests.join(", ")}`).toEqual([]);
