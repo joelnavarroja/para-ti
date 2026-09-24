@@ -1,15 +1,18 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { SceneTransition } from "../shared/SceneTransition";
 import { PrimaryButton } from "../shared/PrimaryButton";
 import { NumberPicker } from "./NumberPicker";
 import { TensionFX, type TensionPhase } from "../shared/TensionFX";
-import { playChime, playJackpot, duckMusic } from "@/lib/sound";
+import { ConfettiBurst } from "../shared/ConfettiBurst";
+import { playChime, playJackpot, playDrumroll, playBigFlourish, duckMusic } from "@/lib/sound";
 import type { QuizQuestion } from "@/lib/content";
 
 const BUILDING_MS = 450;
 const FLASH_MS = 250;
+const IMPACT_MS = 1100;
 
 export function QuizQuestionScene({
   question,
@@ -21,6 +24,8 @@ export function QuizQuestionScene({
   const [selected, setSelected] = useState<string | null>(null);
   const [revealed, setRevealed] = useState(false);
   const [phase, setPhase] = useState<TensionPhase>("idle");
+  const [showImpact, setShowImpact] = useState(false);
+  const isNumeroQuestion = question.id === "numero";
 
   useEffect(() => {
     if (!selected) return;
@@ -38,6 +43,21 @@ export function QuizQuestionScene({
 
   useEffect(() => {
     if (!revealed) return;
+
+    if (isNumeroQuestion) {
+      // Payoff "numero": el generico playChime se queda corto para el
+      // acierto del número, así que lo capamos con una cola de redoble
+      // corta + un flourish grande sintetizado, y disparamos la
+      // animación de impacto en pantalla ("¡ACIERTO!" + flash de color).
+      duckMusic(1400);
+      playChime();
+      playDrumroll(0.35);
+      window.setTimeout(() => playBigFlourish(), 200);
+      setShowImpact(true);
+      const toHideImpact = window.setTimeout(() => setShowImpact(false), IMPACT_MS);
+      return () => window.clearTimeout(toHideImpact);
+    }
+
     // Easter egg: si el nombre elegido es "Madian", el resultado suena
     // como un premio gordo (jackpot) en vez de la campanada genérica.
     // Punto de disparo elegido deliberadamente aquí (cuando se revela la
@@ -53,11 +73,45 @@ export function QuizQuestionScene({
       duckMusic(700);
       playChime();
     }
-  }, [revealed, selected]);
+  }, [revealed, selected, isNumeroQuestion]);
 
   if (selected && revealed) {
     return (
       <SceneTransition>
+        {isNumeroQuestion && <ConfettiBurst variant="realistic" intense />}
+        <AnimatePresence>
+          {showImpact && (
+            <motion.div
+              data-testid="quiz-impact-flash"
+              className="pointer-events-none fixed inset-0 z-50 flex items-center justify-center bg-amber-400/0"
+              initial={{ backgroundColor: "rgba(251,191,36,0)" }}
+              animate={{
+                backgroundColor: [
+                  "rgba(251,191,36,0)",
+                  "rgba(251,191,36,0.55)",
+                  "rgba(251,191,36,0)",
+                ],
+              }}
+              exit={{ backgroundColor: "rgba(251,191,36,0)" }}
+              transition={{ duration: IMPACT_MS / 1000 }}
+            >
+              <motion.span
+                data-testid="quiz-impact-text"
+                className="text-6xl font-extrabold text-amber-950 drop-shadow-[0_0_20px_rgba(255,255,255,0.9)]"
+                initial={{ scale: 0.2, opacity: 0, rotate: -8 }}
+                animate={{
+                  scale: [0.2, 1.5, 0.85, 1.15, 1],
+                  opacity: [0, 1, 1, 1, 1],
+                  rotate: [-8, 4, -2, 0],
+                }}
+                exit={{ scale: 0.6, opacity: 0 }}
+                transition={{ duration: 0.55, ease: "easeOut" }}
+              >
+                ¡ACIERTO!
+              </motion.span>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <p className="text-lg text-amber-100/70">{question.question}</p>
         <p
           data-testid="quiz-response"
