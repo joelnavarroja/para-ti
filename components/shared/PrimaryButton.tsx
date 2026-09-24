@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
+import { playTick } from "@/lib/sound";
 
 export function PrimaryButton({
   children,
@@ -20,9 +21,20 @@ export function PrimaryButton({
   return (
     <motion.button
       type="button"
-      onClick={onClick}
-      whileTap={{ scale: 0.94 }}
-      whileHover={{ scale: 1.03 }}
+      onClick={() => {
+        playTick();
+        onClick();
+      }}
+      whileTap={{
+        scale: [1, 0.88, 1.05, 0.94],
+        rotate: [0, -3, 3, 0],
+        transition: { duration: 0.28, ease: "easeOut" },
+      }}
+      whileHover={{
+        scale: 1.05,
+        boxShadow: "0 0 30px 8px rgba(251,191,36,0.6)",
+      }}
+      initial={{ scale: 1 }}
       transition={{ type: "tween", duration: 0.12 }}
       className={`min-h-[52px] min-w-[160px] rounded-full bg-gradient-to-br px-8 py-3 text-lg font-bold shadow-lg ${palette}`}
     >
