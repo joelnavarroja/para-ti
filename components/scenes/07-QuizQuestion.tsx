@@ -5,7 +5,7 @@ import { SceneTransition } from "../shared/SceneTransition";
 import { PrimaryButton } from "../shared/PrimaryButton";
 import { NumberPicker } from "./NumberPicker";
 import { TensionFX, type TensionPhase } from "../shared/TensionFX";
-import { playChime, duckMusic } from "@/lib/sound";
+import { playChime, playJackpot, duckMusic } from "@/lib/sound";
 import type { QuizQuestion } from "@/lib/content";
 
 const BUILDING_MS = 450;
@@ -37,11 +37,23 @@ export function QuizQuestionScene({
   }, [selected]);
 
   useEffect(() => {
-    if (revealed) {
+    if (!revealed) return;
+    // Easter egg: si el nombre elegido es "Madian", el resultado suena
+    // como un premio gordo (jackpot) en vez de la campanada genérica.
+    // Punto de disparo elegido deliberadamente aquí (cuando se revela la
+    // respuesta a cualquiera de las preguntas de GROUP_NAMES: "guapo",
+    // "cadaver", "millonario") porque es el único lugar del flujo donde
+    // "Madian" puede quedar seleccionado/resaltado como respuesta del
+    // usuario; la ruleta nunca usa GROUP_NAMES, así que no hay otro punto
+    // de "victoria" de Madian en toda la experiencia.
+    if (selected === "Madian") {
+      duckMusic(1600);
+      playJackpot();
+    } else {
       duckMusic(700);
       playChime();
     }
-  }, [revealed]);
+  }, [revealed, selected]);
 
   if (selected && revealed) {
     return (
