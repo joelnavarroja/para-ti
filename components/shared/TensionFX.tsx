@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useEffect, type ReactNode } from "react";
-import { playDrumroll } from "@/lib/sound";
+import { playDrumroll, duckMusic } from "@/lib/sound";
 
 const SHAKE_X = [0, -3, 3, -3, 3, -6, 6, -8, 8, -12, 12, -6, 0];
 const SHAKE_ROTATE = [0, -0.5, 0.5, -0.5, 0.5, -1, 1, -1.5, 1.5, -2, 2, -1, 0];
@@ -37,6 +37,7 @@ export function TensionFX({
 }) {
   useEffect(() => {
     if (phase === "building") {
+      duckMusic(buildingMs + 400);
       playDrumroll(buildingMs / 1000);
     }
   }, [phase, buildingMs]);

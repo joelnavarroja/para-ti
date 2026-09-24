@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { SceneTransition } from "../shared/SceneTransition";
 import { ConfettiBurst } from "../shared/ConfettiBurst";
 import { NARRATIVE_TEXTS } from "@/lib/content";
-import { playDrumroll, playRip, playFanfare } from "@/lib/sound";
+import { playDrumroll, playRip, playFanfare, duckMusic } from "@/lib/sound";
 
 type Phase = "idle" | "tension" | "tear" | "flash" | "reveal";
 
@@ -21,6 +21,7 @@ export function PackOpening() {
 
   useEffect(() => {
     if (phase !== "tension") return;
+    duckMusic(TENSION_MS + TEAR_MS + FLASH_MS + 800);
     playDrumroll(TENSION_MS / 1000);
     const toTear = window.setTimeout(() => setPhase("tear"), TENSION_MS);
     return () => window.clearTimeout(toTear);
@@ -42,6 +43,7 @@ export function PackOpening() {
   useEffect(() => {
     if (phase !== "reveal") return;
     playFanfare();
+    duckMusic(1300);
   }, [phase]);
 
   const isOpening = phase !== "idle" && phase !== "reveal";

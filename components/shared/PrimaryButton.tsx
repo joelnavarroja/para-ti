@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion";
 import type { ReactNode } from "react";
-import { playTick } from "@/lib/sound";
+import { playTick, startBackgroundMusic } from "@/lib/sound";
 
 export function PrimaryButton({
   children,
@@ -22,6 +22,13 @@ export function PrimaryButton({
     <motion.button
       type="button"
       onClick={() => {
+        // La música de fondo necesita un gesto de usuario para arrancar el
+        // AudioContext (política de autoplay de los navegadores). El primer
+        // botón que se pulsa en toda la experiencia es el "Empezar" de
+        // IntroScreen, pero como PrimaryButton es compartido por el resto de
+        // escenas, llamamos aquí de forma idempotente: startBackgroundMusic
+        // no hace nada si ya está sonando.
+        startBackgroundMusic();
         playTick();
         onClick();
       }}

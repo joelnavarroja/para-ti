@@ -234,3 +234,163 @@ export function playRip() {
     start: now,
   });
 }
+
+/**
+ * Música de fondo (loop ligero estilo casino/gameshow).
+ *
+ * Reutiliza el mismo AudioContext compartido: un gain node maestro
+ * (`musicGain`) por el que pasan todas las notas del loop, así el
+ * "ducking" (bajar volumen durante fanfarrias/reveals) es solo mover la
+ * ganancia de ese nodo en vez de tener que tocar cada oscilador. El loop
+ * en sí es un arpegio suave (acorde mayor ascendente/descendente) programado
+ * con setInterval: cada tick agenda una nota corta unos milisegundos por
+ * delante para no depender de la precisión del timer del hilo principal.
+ */
+let musicGain: GainNode | null = null;
+let musicIntervalId: number | null = null;
+let musicStepIndex = 0;
+const MUSIC_BASE_GAIN = 0.045;
+// Acorde mayor suave (I) recorrido en arpegio, tipo "gameshow" relajado.
+const MUSIC_ARPEGGIO = [261.63, 329.63, 392.0, 523.25, 392.0, 329.63]; // C4 E4 G4 C5 G4 E4
+const MUSIC_STEP_MS = 480;
+
+export function startBackgroundMusic() {
+  const context = getContext();
+  if (!context) return;
+  if (musicIntervalId !== null) return; // ya está sonando
+
+  musicGain = context.createGain();
+  musicGain.gain.setValueAtTime(MUSIC_BASE_GAIN, context.currentTime);
+  musicGain.connect(context.destination);
+
+  const playStep = () => {
+    if (!context || !musicGain) return;
+    const now = context.currentTime;
+    const freq = MUSIC_ARPEGGIO[musicStepIndex % MUSIC_ARPEGGIO.length];
+    const osc = context.createOscillator();
+    const noteGain = context.createGain();
+    osc.type = "triangle";
+    osc.frequency.setValueAtTime(freq, now);
+    noteGain.gain.setValueAtTime(0.0001, now);
+    noteGain.gain.exponentialRampToValueAtTime(0.6, now + 0.05);
+    noteGain.gain.exponentialRampToValueAtTime(0.0001, now + MUSIC_STEP_MS / 1000);
+    osc.connect(noteGain);
+    noteGain.connect(musicGain);
+    osc.start(now);
+    osc.stop(now + MUSIC_STEP_MS / 1000 + 0.02);
+
+    // Nota "pad" grave una octava abajo cada 2 pasos, para dar cuerpo de
+    // acorde sostenido sin saturar el arpegio agudo.
+    if (musicStepIndex % 2 === 0) {
+      const pad = context.createOscillator();
+      const padGain = context.createGain();
+      pad.type = "sine";
+      pad.frequency.setValueAtTime(freq / 2, now);
+      padGain.gain.setValueAtTime(0.0001, now);
+      padGain.gain.exponentialRampToValueAtTime(0.3, now + 0.08);
+      padGain.gain.exponentialRampToValueAtTime(0.0001, now + (MUSIC_STEP_MS * 2) / 1000);
+      pad.connect(padGain);
+      padGain.connect(musicGain);
+      pad.start(now);
+      pad.stop(now + (MUSIC_STEP_MS * 2) / 1000 + 0.02);
+    }
+
+    musicStepIndex += 1;
+  };
+
+  playStep();
+  musicIntervalId = window.setInterval(playStep, MUSIC_STEP_MS);
+}
+
+export function stopBackgroundMusic() {
+  if (musicIntervalId !== null) {
+    window.clearInterval(musicIntervalId);
+    musicIntervalId = null;
+  }
+  if (musicGain && ctx) {
+    const now = ctx.currentTime;
+    musicGain.gain.cancelScheduledValues(now);
+    musicGain.gain.setValueAtTime(musicGain.gain.value, now);
+    musicGain.gain.exponentialRampToValueAtTime(0.0001, now + 0.3);
+  }
+  musicGain = null;
+  musicStepIndex = 0;
+}
+
+/**
+ * Baja temporalmente el volumen de la música de fondo (sin detenerla) para
+ * que no compita con una fanfarria/redoble/campanada, y lo restaura pasados
+ * `ms`. Si la música no está sonando, no hace nada.
+ */
+export function duckMusic(ms = 900) {
+  if (!musicGain || !ctx) return;
+  const now = ctx.currentTime;
+  musicGain.gain.cancelScheduledValues(now);
+  musicGain.gain.setValueAtTime(musicGain.gain.value, now);
+  musicGain.gain.linearRampToValueAtTime(MUSIC_BASE_GAIN * 0.18, now + 0.08);
+  musicGain.gain.setValueAtTime(MUSIC_BASE_GAIN * 0.18, now + ms / 1000 - 0.15);
+  musicGain.gain.linearRampToValueAtTime(MUSIC_BASE_GAIN, now + ms / 1000);
+}
+
+/**
+ * Sonido "jackpot"/cha-ching, más grande que playChime: capas de campana
+ * ascendente + un arpegio "sparkle" agudo encima, para el resultado
+ * especial cuando sale elegido "Madian".
+ */
+export function playJackpot() {
+  const context = getContext();
+  if (!context) return;
+  const now = context.currentTime;
+
+  // Capa 1: acorde de campana ascendente (más grande que playChime).
+  const bellNotes = [783.99, 987.77, 1174.66, 1567.98]; // G5 B5 D6 G6
+  bellNotes.forEach((freq, i) => {
+    tone(context, { freq, duration: 0.5, type: "sine", peakGain: 0.2, start: now + i * 0.05 });
+    tone(context, { freq: freq * 2, duration: 0.35, type: "triangle", peakGain: 0.08, start: now + i * 0.05 });
+  });
+
+  // Capa 2: arpegio "sparkle" agudo tipo tragaperras.
+  const sparkle = [1567.98, 1864.66, 2093.0, 2489.02, 2793.83];
+  sparkle.forEach((freq, i) => {
+    tone(context, {
+      freq,
+      duration: 0.18,
+      type: "square",
+      peakGain: 0.07,
+      start: now + 0.2 + i * 0.07,
+    });
+  });
+
+  // Capa 3: "aplauso"/chispa de ruido, más denso que playChime.
+  for (let i = 0; i < 10; i++) {
+    noiseBurst(context, { start: now + 0.15 + i * 0.035, duration: 0.05, peakGain: 0.06 });
+  }
+}
+
+/**
+ * Remate/flourish grande para el payoff de acertar el número del quiz:
+ * un barrido ascendente de osciladores en capas + un golpe final grave,
+ * pensado para sonar encima de playChime + cola de playDrumroll sin
+ * quedar redundante con ellos.
+ */
+export function playBigFlourish() {
+  const context = getContext();
+  if (!context) return;
+  const now = context.currentTime;
+
+  // Barrido ascendente en capas (glissando tipo "power-up").
+  [0, 0.03, 0.06].forEach((offset, i) => {
+    tone(context, {
+      freq: 220,
+      freqEnd: 1760,
+      duration: 0.5,
+      type: i === 0 ? "sawtooth" : "triangle",
+      peakGain: 0.12 - i * 0.02,
+      start: now + offset,
+    });
+  });
+
+  // Golpe grave final para dar peso/impacto.
+  tone(context, { freq: 90, duration: 0.35, type: "sine", peakGain: 0.22, start: now + 0.42 });
+  noiseBurst(context, { start: now + 0.42, duration: 0.3, peakGain: 0.15 });
+}

@@ -5,7 +5,7 @@ import { SceneTransition } from "../shared/SceneTransition";
 import { PrimaryButton } from "../shared/PrimaryButton";
 import { NumberPicker } from "./NumberPicker";
 import { TensionFX, type TensionPhase } from "../shared/TensionFX";
-import { playChime } from "@/lib/sound";
+import { playChime, duckMusic } from "@/lib/sound";
 import type { QuizQuestion } from "@/lib/content";
 
 const BUILDING_MS = 450;
@@ -38,6 +38,7 @@ export function QuizQuestionScene({
 
   useEffect(() => {
     if (revealed) {
+      duckMusic(700);
       playChime();
     }
   }, [revealed]);
