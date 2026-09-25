@@ -5,9 +5,9 @@ async function skipToQuiz(page: import("@playwright/test").Page) {
   await page.goto("/");
   await page.getByRole("button", { name: "Empezar" }).click();
   await page.getByTestId("roulette-spin").click();
-  await page.waitForTimeout(4600);
+  await page.waitForTimeout(5000);
   await page.getByTestId("roulette-spin").click();
-  await page.waitForTimeout(4600);
+  await page.waitForTimeout(5000);
   await page.getByRole("button", { name: /Pagar 5€/ }).click();
   await page.getByRole("button", { name: "Continuar" }).click();
   await page.getByRole("button", { name: "¿Y ahora qué?" }).click();

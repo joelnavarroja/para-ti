@@ -301,7 +301,10 @@ export function playRip() {
 let musicGain: GainNode | null = null;
 let musicIntervalId: number | null = null;
 let musicStepIndex = 0;
-const MUSIC_BASE_GAIN = 0.045;
+// 0.045 resultaba prácticamente inaudible frente al resto de efectos
+// (peakGain 0.15-0.22): se sube a un nivel que sí se percibe como música
+// de fondo real sin tapar los efectos puntuales.
+const MUSIC_BASE_GAIN = 0.1;
 // Acorde mayor suave (I) recorrido en arpegio, tipo "gameshow" relajado.
 const MUSIC_ARPEGGIO = [261.63, 329.63, 392.0, 523.25, 392.0, 329.63]; // C4 E4 G4 C5 G4 E4
 const MUSIC_STEP_MS = 480;

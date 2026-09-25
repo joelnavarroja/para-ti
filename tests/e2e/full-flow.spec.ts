@@ -16,9 +16,9 @@ test("recorrido completo de intro a pack opening final", async ({ page }) => {
 
   // Ruleta 1: dos giros hasta avanzar
   await page.getByTestId("roulette-spin").click();
-  await page.waitForTimeout(4600);
+  await page.waitForTimeout(5000);
   await page.getByTestId("roulette-spin").click();
-  await page.waitForTimeout(4600);
+  await page.waitForTimeout(5000);
 
   // Pago falso
   await page.getByRole("button", { name: /Pagar 5€/ }).click();

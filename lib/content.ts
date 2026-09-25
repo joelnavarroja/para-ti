@@ -82,8 +82,8 @@ export const NARRATIVE_TEXTS = {
   },
   debtReveal: {
     title: "Nos debes 20€ a todos",
-    subtitle: "¿Quieres intentarlo otra vez?",
-    cta: "Pagar 5€ y volver a girar",
+    subtitle: "Paga y a lo mejor hay suerte...",
+    cta: "Pagar 5€ y suplicar",
   },
   fakeWin: {
     title: "¡¡¡HAS GANADO!!! 🎉",
