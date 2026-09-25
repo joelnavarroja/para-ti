@@ -55,28 +55,33 @@ export function PackOpening() {
 
       <AnimatePresence mode="wait">
         {phase === "idle" && (
-          <motion.div
-            key="pack"
-            initial={{ scale: 1 }}
-            animate={{
-              boxShadow: [
-                "0 0 20px 4px rgba(251,191,36,0.4)",
-                "0 0 40px 10px rgba(251,191,36,0.8)",
-                "0 0 20px 4px rgba(251,191,36,0.4)",
-              ],
-            }}
-            transition={{ duration: 1.4, repeat: Infinity }}
-            className="flex h-64 w-44 items-center justify-center rounded-2xl border-4 border-amber-300 bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-600"
-          >
-            <button
-              type="button"
-              onClick={() => setPhase("tension")}
-              data-testid="pack-button"
-              className="text-5xl"
-            >
-              🎁
-            </button>
-          </motion.div>
+          <div key="pack" className="relative flex h-64 w-44 items-center justify-center">
+            {/*
+              El glow pulsante se hacía antes animando `boxShadow` en bucle
+              infinito: boxShadow no es una propiedad "compositable" (el
+              navegador tiene que repintar en cada frame), así que un pulso
+              infinito de eso es caro de forma gratuita mientras el usuario
+              solo está mirando el sobre cerrado. Lo sustituimos por una capa
+              de aura aparte que solo anima `opacity`/`scale` (compositor).
+            */}
+            <motion.div
+              aria-hidden
+              className="absolute inset-0 rounded-2xl bg-amber-400 blur-xl"
+              style={{ willChange: "opacity, transform" }}
+              animate={{ opacity: [0.35, 0.75, 0.35], scale: [0.96, 1.08, 0.96] }}
+              transition={{ duration: 1.4, repeat: Infinity, ease: "easeInOut" }}
+            />
+            <div className="relative flex h-64 w-44 items-center justify-center rounded-2xl border-4 border-amber-300 bg-gradient-to-br from-amber-500 via-yellow-400 to-amber-600 shadow-xl shadow-amber-500/40">
+              <button
+                type="button"
+                onClick={() => setPhase("tension")}
+                data-testid="pack-button"
+                className="text-5xl"
+              >
+                🎁
+              </button>
+            </div>
+          </div>
         )}
 
         {isOpening && (

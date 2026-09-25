@@ -6,13 +6,13 @@ import { playDrumroll, duckMusic } from "@/lib/sound";
 
 const SHAKE_X = [0, -3, 3, -3, 3, -6, 6, -8, 8, -12, 12, -6, 0];
 const SHAKE_ROTATE = [0, -0.5, 0.5, -0.5, 0.5, -1, 1, -1.5, 1.5, -2, 2, -1, 0];
-const GLITCH_FILTER = [
-  "hue-rotate(0deg) contrast(1)",
-  "hue-rotate(25deg) contrast(1.5)",
-  "hue-rotate(-25deg) contrast(1.3)",
-  "hue-rotate(10deg) contrast(1.4)",
-  "hue-rotate(0deg) contrast(1)",
-];
+// El "glitch" de color se hacía antes animando `filter` (hue-rotate/contrast)
+// sobre todo el contenido de la escena: eso obliga al navegador a repintar
+// la escena entera en cada frame y es muy caro en móvil (se notaba como
+// tirones durante el shake). Lo sustituimos por un velo de color superpuesto
+// que solo anima `opacity` (compositor, sin repintado), dando una sensación
+// de glitch parecida sin el coste.
+const GLITCH_OPACITY = [0, 0.28, 0, 0.22, 0];
 
 export type TensionPhase = "idle" | "building" | "flash";
 
@@ -55,15 +55,28 @@ export function TensionFX({
   return (
     <>
       <motion.div
+        style={{ willChange: phase === "building" ? "transform" : undefined }}
         animate={
           phase === "building"
-            ? { x: shakeX, rotate: shakeRotate, filter: GLITCH_FILTER }
-            : { x: 0, rotate: 0, filter: "hue-rotate(0deg) contrast(1)" }
+            ? { x: shakeX, rotate: shakeRotate }
+            : { x: 0, rotate: 0 }
         }
         transition={{ duration: buildingMs / 1000, ease: "easeIn" }}
       >
         {children}
       </motion.div>
+      <AnimatePresence>
+        {phase === "building" && (
+          <motion.div
+            key="glitch-veil"
+            className="pointer-events-none fixed inset-0 z-40 bg-fuchsia-500 mix-blend-screen"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: GLITCH_OPACITY }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: buildingMs / 1000, ease: "easeIn" }}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {phase === "flash" && (
           <motion.div
